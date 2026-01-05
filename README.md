@@ -11,7 +11,7 @@ The official Go SDK for the Lighter trading platform. This SDK provides full fea
 ## Installation
 
 ```bash
-go get github.com/elliottech/lighter-go
+go get github.com/0xjord4n/lighter-go
 ```
 
 ## Quick Start
@@ -23,8 +23,8 @@ package main
 
 import (
     "fmt"
-    "github.com/elliottech/lighter-go/client/http"
-    "github.com/elliottech/lighter-go/types/api"
+    "github.com/0xjord4n/lighter-go/client/http"
+    "github.com/0xjord4n/lighter-go/types/api"
 )
 
 func main() {
@@ -48,9 +48,9 @@ func main() {
 package main
 
 import (
-    "github.com/elliottech/lighter-go/client"
-    "github.com/elliottech/lighter-go/client/http"
-    "github.com/elliottech/lighter-go/types"
+    "github.com/0xjord4n/lighter-go/client"
+    "github.com/0xjord4n/lighter-go/client/http"
+    "github.com/0xjord4n/lighter-go/types"
 )
 
 func main() {
@@ -88,7 +88,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/elliottech/lighter-go/client/ws"
+    "github.com/0xjord4n/lighter-go/client/ws"
 )
 
 func main() {
@@ -162,7 +162,7 @@ Two nonce management strategies are available:
 - **APIManager**: Queries API for every nonce. Slower but always accurate.
 
 ```go
-import "github.com/elliottech/lighter-go/nonce"
+import "github.com/0xjord4n/lighter-go/nonce"
 
 // Use optimistic (default)
 manager := nonce.NewOptimisticManager(httpClient)
@@ -220,7 +220,7 @@ Pre-compiled shared libraries are available for FFI usage:
 
 All libraries follow the naming convention `lighter-{os}-{arch}`.
 
-The build & accompanying `.h` files can be found in the [releases](https://github.com/elliottech/lighter-go/releases).
+The build & accompanying `.h` files can be found in the [releases](https://github.com/0xjord4n/lighter-go/releases).
 
 To compile your own binaries, see the commands in the `justfile`.
 

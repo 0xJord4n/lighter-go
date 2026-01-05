@@ -3,8 +3,8 @@ package http
 import (
 	"fmt"
 
-	core "github.com/elliottech/lighter-go/client"
-	"github.com/elliottech/lighter-go/types/api"
+	core "github.com/0xjord4n/lighter-go/client"
+	"github.com/0xjord4n/lighter-go/types/api"
 )
 
 type accountAPIImpl struct {

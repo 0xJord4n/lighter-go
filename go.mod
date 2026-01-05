@@ -1,4 +1,4 @@
-module github.com/elliottech/lighter-go
+module github.com/0xjord4n/lighter-go
 
 go 1.23.0
 

@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/elliottech/lighter-go/client/ws"
-	"github.com/elliottech/lighter-go/examples"
+	"github.com/0xjord4n/lighter-go/client/ws"
+	"github.com/0xjord4n/lighter-go/examples"
 )
 
 func main() {

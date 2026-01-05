@@ -9,10 +9,10 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/elliottech/lighter-go/client"
-	"github.com/elliottech/lighter-go/client/http"
-	"github.com/elliottech/lighter-go/types"
-	"github.com/elliottech/lighter-go/types/txtypes"
+	"github.com/0xjord4n/lighter-go/client"
+	"github.com/0xjord4n/lighter-go/client/http"
+	"github.com/0xjord4n/lighter-go/types"
+	"github.com/0xjord4n/lighter-go/types/txtypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 

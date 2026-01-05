@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/elliottech/lighter-go/client/http"
-	"github.com/elliottech/lighter-go/examples"
-	"github.com/elliottech/lighter-go/types/api"
+	"github.com/0xjord4n/lighter-go/client/http"
+	"github.com/0xjord4n/lighter-go/examples"
+	"github.com/0xjord4n/lighter-go/types/api"
 )
 
 func main() {

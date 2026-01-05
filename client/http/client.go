@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	core "github.com/elliottech/lighter-go/client"
+	core "github.com/0xjord4n/lighter-go/client"
 )
 
 var (

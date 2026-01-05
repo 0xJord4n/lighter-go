@@ -6,8 +6,8 @@ import (
 
 	schnorr "github.com/elliottech/poseidon_crypto/signature/schnorr"
 
-	"github.com/elliottech/lighter-go/types"
-	"github.com/elliottech/lighter-go/types/txtypes"
+	"github.com/0xjord4n/lighter-go/types"
+	"github.com/0xjord4n/lighter-go/types/txtypes"
 )
 
 func (c *TxClient) GetAuthToken(deadline time.Time) (string, error) {
