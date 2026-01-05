@@ -23,18 +23,18 @@ func wrapErr(err error) js.Value {
 	return js.ValueOf(map[string]interface{}{})
 }
 
-func messageToSign(info txtypes.TxInfo) string {
+func messageToSign(info txtypes.TxInfo, chainId uint32) string {
 	switch tx := info.(type) {
 	case *txtypes.L2ChangePubKeyTxInfo:
 		return tx.GetL1SignatureBody()
 	case *txtypes.L2TransferTxInfo:
-		return tx.GetL1SignatureBody()
+		return tx.GetL1SignatureBody(chainId)
 	default:
 		return ""
 	}
 }
 
-func convertTxInfoToJS(info txtypes.TxInfo, err error) js.Value {
+func convertTxInfoToJS(info txtypes.TxInfo, err error, chainId uint32) js.Value {
 	if err != nil {
 		return wrapErr(err)
 	}
@@ -52,7 +52,7 @@ func convertTxInfoToJS(info txtypes.TxInfo, err error) js.Value {
 		"txInfo": txInfoStr,
 		"txHash": info.GetTxHash(),
 	}
-	if msg := messageToSign(info); msg != "" {
+	if msg := messageToSign(info, chainId); msg != "" {
 		out["messageToSign"] = msg
 	}
 	return js.ValueOf(out)
@@ -115,11 +115,7 @@ func recoverPanic(fn func() js.Value) (result js.Value) {
 func main() {
 	js.Global().Set("GenerateAPIKey", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		return recoverPanic(func() js.Value {
-			if len(args) < 1 {
-				return js.ValueOf(map[string]interface{}{"error": "GenerateAPIKey expects 1 arg: seed"})
-			}
-			seed := args[0].String()
-			privateKey, publicKey, err := client.GenerateAPIKey(seed)
+			privateKey, publicKey, err := client.GenerateAPIKey()
 			if err != nil {
 				return wrapErr(err)
 			}
@@ -218,7 +214,7 @@ func main() {
 			}
 
 			tx, err := c.GetChangePubKeyTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -238,10 +234,7 @@ func main() {
 				return wrapErr(err)
 			}
 
-			marketIndex, err := safeUint8(args[0], 0)
-			if err != nil {
-				return wrapErr(err)
-			}
+			marketIndex := int16(args[0].Int())
 			clientOrderIndex, err := safeInt(args[1], 1)
 			if err != nil {
 				return wrapErr(err)
@@ -305,7 +298,7 @@ func main() {
 			}
 
 			tx, err := c.GetCreateOrderTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -319,7 +312,7 @@ func main() {
 				return wrapErr(err)
 			}
 
-			marketIndex := uint8(args[0].Int())
+			marketIndex := int16(args[0].Int())
 			orderIndex := int64(args[1].Int())
 			nonce := int64(args[2].Int())
 
@@ -333,7 +326,7 @@ func main() {
 			}
 
 			tx, err := c.GetCancelOrderTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -361,14 +354,14 @@ func main() {
 			}
 
 			tx, err := c.GetCancelAllOrdersTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
 	js.Global().Set("SignTransfer", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		return recoverPanic(func() js.Value {
 			if len(args) < 7 {
-				return js.ValueOf(map[string]interface{}{"error": "SignTransfer expects 7 args: toAccount, usdcAmount, fee, memo, nonce, apiKeyIndex, accountIndex"})
+				return js.ValueOf(map[string]interface{}{"error": "SignTransfer expects 7 args: toAccount, amount, usdcFee, memo, nonce, apiKeyIndex, accountIndex"})
 			}
 			c, err := getClient(args)
 			if err != nil {
@@ -376,8 +369,8 @@ func main() {
 			}
 
 			toAccount := int64(args[0].Int())
-			usdcAmount := int64(args[1].Int())
-			fee := int64(args[2].Int())
+			amount := int64(args[1].Int())
+			usdcFee := int64(args[2].Int())
 			memoStr := args[3].String()
 			nonce := int64(args[4].Int())
 
@@ -392,8 +385,11 @@ func main() {
 
 			txInfo := &types.TransferTxReq{
 				ToAccountIndex: toAccount,
-				USDCAmount:     usdcAmount,
-				Fee:            fee,
+				AssetIndex:     0, // Default to USDC
+				FromRouteType:  0,
+				ToRouteType:    0,
+				Amount:         amount,
+				USDCFee:        usdcFee,
 				Memo:           memoArr,
 			}
 			ops := new(types.TransactOpts)
@@ -402,25 +398,27 @@ func main() {
 			}
 
 			tx, err := c.GetTransferTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
 	js.Global().Set("SignWithdraw", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		return recoverPanic(func() js.Value {
 			if len(args) < 4 {
-				return js.ValueOf(map[string]interface{}{"error": "SignWithdraw expects 4 args: usdcAmount, nonce, apiKeyIndex, accountIndex"})
+				return js.ValueOf(map[string]interface{}{"error": "SignWithdraw expects 4 args: amount, nonce, apiKeyIndex, accountIndex"})
 			}
 			c, err := getClient(args)
 			if err != nil {
 				return wrapErr(err)
 			}
 
-			usdcAmount := uint64(args[0].Int())
+			amount := uint64(args[0].Int())
 			nonce := int64(args[1].Int())
 
 			txInfo := &types.WithdrawTxReq{
-				USDCAmount: usdcAmount,
+				AssetIndex: 0, // Default to USDC
+				RouteType:  0,
+				Amount:     amount,
 			}
 			ops := new(types.TransactOpts)
 			if nonce != -1 {
@@ -428,7 +426,7 @@ func main() {
 			}
 
 			tx, err := c.GetWithdrawTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -442,7 +440,7 @@ func main() {
 				return wrapErr(err)
 			}
 
-			marketIndex := uint8(args[0].Int())
+			marketIndex := int16(args[0].Int())
 			fraction := uint16(args[1].Int())
 			marginMode := uint8(args[2].Int())
 			nonce := int64(args[3].Int())
@@ -458,7 +456,7 @@ func main() {
 			}
 
 			tx, err := c.GetUpdateLeverageTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -472,7 +470,7 @@ func main() {
 				return wrapErr(err)
 			}
 
-			marketIndex := uint8(args[0].Int())
+			marketIndex := int16(args[0].Int())
 			index := int64(args[1].Int())
 			baseAmount := int64(args[2].Int())
 			price := uint32(args[3].Int())
@@ -492,7 +490,7 @@ func main() {
 			}
 
 			tx, err := c.GetModifyOrderTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -514,7 +512,7 @@ func main() {
 			}
 
 			tx, err := c.GetCreateSubAccountTransaction(ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -530,7 +528,7 @@ func main() {
 
 			operatorFee := int64(args[0].Int())
 			initialTotalShares := int64(args[1].Int())
-			minOperatorShareRate := int64(args[2].Int())
+			minOperatorShareRate := uint16(args[2].Int())
 			nonce := int64(args[3].Int())
 
 			txInfo := &types.CreatePublicPoolTxReq{
@@ -544,7 +542,7 @@ func main() {
 			}
 
 			tx, err := c.GetCreatePublicPoolTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -558,14 +556,14 @@ func main() {
 				return wrapErr(err)
 			}
 
-			publicPoolIndex := uint8(args[0].Int())
+			publicPoolIndex := int64(args[0].Int())
 			status := uint8(args[1].Int())
 			operatorFee := int64(args[2].Int())
-			minOperatorShareRate := int64(args[3].Int())
+			minOperatorShareRate := uint16(args[3].Int())
 			nonce := int64(args[4].Int())
 
 			txInfo := &types.UpdatePublicPoolTxReq{
-				PublicPoolIndex:      int64(publicPoolIndex),
+				PublicPoolIndex:      publicPoolIndex,
 				Status:               status,
 				OperatorFee:          operatorFee,
 				MinOperatorShareRate: minOperatorShareRate,
@@ -576,7 +574,7 @@ func main() {
 			}
 
 			tx, err := c.GetUpdatePublicPoolTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -604,7 +602,7 @@ func main() {
 			}
 
 			tx, err := c.GetMintSharesTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -632,7 +630,7 @@ func main() {
 			}
 
 			tx, err := c.GetBurnSharesTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -646,7 +644,7 @@ func main() {
 				return wrapErr(err)
 			}
 
-			marketIndex := uint8(args[0].Int())
+			marketIndex := int16(args[0].Int())
 			usdcAmount := int64(args[1].Int())
 			direction := uint8(args[2].Int())
 			nonce := int64(args[3].Int())
@@ -662,7 +660,7 @@ func main() {
 			}
 
 			tx, err := c.GetUpdateMarginTransaction(txInfo, ops)
-			return convertTxInfoToJS(tx, err)
+			return convertTxInfoToJS(tx, err, c.GetChainId())
 		})
 	}))
 
@@ -698,7 +696,7 @@ func main() {
 				}
 
 				orders[i] = &types.CreateOrderTxReq{
-					MarketIndex:      uint8(orderObj.Get("MarketIndex").Int()),
+					MarketIndex:      int16(orderObj.Get("MarketIndex").Int()),
 					ClientOrderIndex: int64(orderObj.Get("ClientOrderIndex").Int()),
 					BaseAmount:       int64(orderObj.Get("BaseAmount").Int()),
 					Price:            uint32(orderObj.Get("Price").Int()),
@@ -723,7 +721,7 @@ func main() {
 			}
 
 			txInfo, err := c.GetCreateGroupedOrdersTransaction(req, ops)
-			return convertTxInfoToJS(txInfo, err)
+			return convertTxInfoToJS(txInfo, err, c.GetChainId())
 		})
 	}))
 
