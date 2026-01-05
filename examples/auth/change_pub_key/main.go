@@ -8,6 +8,7 @@ import (
 	"github.com/0xJord4n/lighter-go/client"
 	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
+	"github.com/0xJord4n/lighter-go/signer"
 	"github.com/0xJord4n/lighter-go/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -16,6 +17,12 @@ func main() {
 	privateKey := examples.GetPrivateKey()
 	if privateKey == "" {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
+	}
+
+	// Ethereum private key for L1 signature (required for ChangePubKey)
+	ethPrivateKey := examples.GetEthPrivateKey()
+	if ethPrivateKey == "" {
+		log.Fatal("LIGHTER_ETH_PRIVATE_KEY environment variable not set")
 	}
 
 	apiURL := examples.GetAPIURL()
@@ -28,6 +35,12 @@ func main() {
 	signerClient, err := client.NewSignerClient(httpClient, privateKey, chainId, apiKeyIndex, accountIndex, nil)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
+	}
+
+	// Create L1 signer for Ethereum signature
+	l1Signer, err := signer.NewL1Signer(ethPrivateKey)
+	if err != nil {
+		log.Fatalf("Failed to create L1 signer: %v", err)
 	}
 
 	// Generate a new API key to register
@@ -59,12 +72,17 @@ func main() {
 		log.Fatalf("Failed to create change pub key transaction: %v", err)
 	}
 
+	// Sign with Ethereum key (L1 signature)
+	l1Sig, err := l1Signer.Sign(txInfo.GetL1SignatureBody())
+	if err != nil {
+		log.Fatalf("Failed to sign L1 message: %v", err)
+	}
+	txInfo.SetL1Sig(l1Sig)
+
 	fmt.Println("Change Pub Key Transaction Created!")
 	fmt.Printf("  TX Hash: %s\n", txInfo.GetTxHash())
 	fmt.Printf("  New Public Key: %s\n", newPublicKey)
-	fmt.Println()
-	fmt.Println("NOTE: This transaction requires L1 signature for security.")
-	fmt.Printf("  Message to sign: %s\n", txInfo.GetL1SignatureBody())
+	fmt.Printf("  From: %s\n", l1Signer.Address())
 
 	// Submit to API
 	resp, err := signerClient.SendAndSubmit(txInfo)

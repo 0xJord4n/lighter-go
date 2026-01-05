@@ -83,6 +83,11 @@ func (txInfo *L2ChangePubKeyTxInfo) GetL1AddressBySignature() common.Address {
 	return calculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
+// SetL1Sig sets the L1 (Ethereum) signature on the transaction
+func (txInfo *L2ChangePubKeyTxInfo) SetL1Sig(sig string) {
+	txInfo.L1Sig = sig
+}
+
 func (txInfo *L2ChangePubKeyTxInfo) Hash(lighterChainId uint32, extra ...g.Element) (msgHash []byte, err error) {
 	elems := make([]g.Element, 0, 11)
 

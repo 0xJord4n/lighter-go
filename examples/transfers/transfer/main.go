@@ -8,6 +8,7 @@ import (
 	"github.com/0xJord4n/lighter-go/client"
 	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
+	"github.com/0xJord4n/lighter-go/signer"
 	"github.com/0xJord4n/lighter-go/types"
 )
 
@@ -15,6 +16,12 @@ func main() {
 	privateKey := examples.GetPrivateKey()
 	if privateKey == "" {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
+	}
+
+	// Ethereum private key for L1 signature (required for transfers)
+	ethPrivateKey := examples.GetEthPrivateKey()
+	if ethPrivateKey == "" {
+		log.Fatal("LIGHTER_ETH_PRIVATE_KEY environment variable not set")
 	}
 
 	apiURL := examples.GetAPIURL()
@@ -27,6 +34,12 @@ func main() {
 	signerClient, err := client.NewSignerClient(httpClient, privateKey, chainId, apiKeyIndex, accountIndex, nil)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
+	}
+
+	// Create L1 signer for Ethereum signature
+	l1Signer, err := signer.NewL1Signer(ethPrivateKey)
+	if err != nil {
+		log.Fatalf("Failed to create L1 signer: %v", err)
 	}
 
 	// Create a transfer to another account
@@ -48,14 +61,18 @@ func main() {
 		log.Fatalf("Failed to create transfer transaction: %v", err)
 	}
 
+	// Sign with Ethereum key (L1 signature)
+	l1Sig, err := l1Signer.Sign(txInfo.GetL1SignatureBody(chainId))
+	if err != nil {
+		log.Fatalf("Failed to sign L1 message: %v", err)
+	}
+	txInfo.SetL1Sig(l1Sig)
+
 	fmt.Println("Transfer Transaction Created!")
 	fmt.Printf("  TX Hash: %s\n", txInfo.GetTxHash())
+	fmt.Printf("  From: %s\n", l1Signer.Address())
 	fmt.Printf("  To Account: %d\n", req.ToAccountIndex)
 	fmt.Printf("  Amount: %.2f USDC\n", float64(req.Amount)/1_000000)
-	fmt.Printf("  Memo: %s\n", string(memo[:]))
-	fmt.Println()
-	fmt.Println("NOTE: This transaction requires L1 signature for security.")
-	fmt.Printf("  Message to sign: %s\n", txInfo.GetL1SignatureBody(chainId))
 
 	// Submit to API
 	resp, err := signerClient.SendAndSubmit(txInfo)

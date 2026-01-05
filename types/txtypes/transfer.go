@@ -135,6 +135,11 @@ func (txInfo *L2TransferTxInfo) GetL1AddressBySignature(chainId uint32) common.A
 	return calculateL1AddressBySignature(txInfo.GetL1SignatureBody(chainId), txInfo.L1Sig)
 }
 
+// SetL1Sig sets the L1 (Ethereum) signature on the transaction
+func (txInfo *L2TransferTxInfo) SetL1Sig(sig string) {
+	txInfo.L1Sig = sig
+}
+
 func (txInfo *L2TransferTxInfo) Hash(lighterChainId uint32, extra ...g.Element) (msgHash []byte, err error) {
 	elems := make([]g.Element, 0, 14)
 
