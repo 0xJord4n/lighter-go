@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/0xJord4n/lighter-go/nonce"
+	"github.com/0xJord4n/lighter-go/signer"
 	"github.com/0xJord4n/lighter-go/types"
 	"github.com/0xJord4n/lighter-go/types/api"
 	"github.com/0xJord4n/lighter-go/types/txtypes"
@@ -321,6 +322,60 @@ func (c *SignerClient) SendTxBatch(txInfos []txtypes.TxInfo) (*api.RespSendTxBat
 	}
 
 	return c.fullHTTP.Transaction().SendTxBatch(txTypes, txInfoJSONs)
+}
+
+// Transfer creates, signs (L1 + L2), and submits a transfer transaction.
+// This is a convenience method that handles L1 signing internally.
+// ethPrivateKey is the Ethereum private key (hex-encoded) for L1 signature.
+func (c *SignerClient) Transfer(ethPrivateKey string, req *types.TransferTxReq, opts *types.TransactOpts) (*api.RespSendTx, error) {
+	// Create L1 signer
+	l1Signer, err := signer.NewL1Signer(ethPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create L1 signer: %w", err)
+	}
+
+	// Create the transfer transaction (L2 signed)
+	txInfo, err := c.GetTransferTransaction(req, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create transfer transaction: %w", err)
+	}
+
+	// Sign with Ethereum key (L1 signature)
+	l1Sig, err := l1Signer.Sign(txInfo.GetL1SignatureBody(c.GetChainId()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign L1 message: %w", err)
+	}
+	txInfo.SetL1Sig(l1Sig)
+
+	// Submit
+	return c.SendAndSubmit(txInfo)
+}
+
+// ChangePubKey creates, signs (L1 + L2), and submits a change pub key transaction.
+// This is a convenience method that handles L1 signing internally.
+// ethPrivateKey is the Ethereum private key (hex-encoded) for L1 signature.
+func (c *SignerClient) ChangePubKey(ethPrivateKey string, req *types.ChangePubKeyReq, opts *types.TransactOpts) (*api.RespSendTx, error) {
+	// Create L1 signer
+	l1Signer, err := signer.NewL1Signer(ethPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create L1 signer: %w", err)
+	}
+
+	// Create the change pub key transaction (L2 signed)
+	txInfo, err := c.GetChangePubKeyTransaction(req, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create change pub key transaction: %w", err)
+	}
+
+	// Sign with Ethereum key (L1 signature)
+	l1Sig, err := l1Signer.Sign(txInfo.GetL1SignatureBody())
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign L1 message: %w", err)
+	}
+	txInfo.SetL1Sig(l1Sig)
+
+	// Submit
+	return c.SendAndSubmit(txInfo)
 }
 
 // GetOpenOrders retrieves open orders for the account
