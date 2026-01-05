@@ -6,10 +6,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/0xjord4n/lighter-go/client"
-	"github.com/0xjord4n/lighter-go/client/http"
-	"github.com/0xjord4n/lighter-go/types"
-	"github.com/0xjord4n/lighter-go/types/txtypes"
+	"github.com/0xJord4n/lighter-go/client"
+	"github.com/0xJord4n/lighter-go/client/http"
+	"github.com/0xJord4n/lighter-go/types"
+	"github.com/0xJord4n/lighter-go/types/txtypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 

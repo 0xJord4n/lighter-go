@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xjord4n/lighter-go/signer"
-	"github.com/0xjord4n/lighter-go/types/txtypes"
+	"github.com/0xJord4n/lighter-go/signer"
+	"github.com/0xJord4n/lighter-go/types/txtypes"
 	g "github.com/elliottech/poseidon_crypto/field/goldilocks"
 	gFp5 "github.com/elliottech/poseidon_crypto/field/goldilocks_quintic_extension"
 	p2 "github.com/elliottech/poseidon_crypto/hash/poseidon2_goldilocks"

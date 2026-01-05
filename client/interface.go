@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/0xjord4n/lighter-go/types/api"
+	"github.com/0xJord4n/lighter-go/types/api"
 )
 
 // MinimalHTTPClient is the minimal interface for HTTP operations.

@@ -28,10 +28,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xjord4n/lighter-go/nonce"
-	"github.com/0xjord4n/lighter-go/types"
-	"github.com/0xjord4n/lighter-go/types/api"
-	"github.com/0xjord4n/lighter-go/types/txtypes"
+	"github.com/0xJord4n/lighter-go/nonce"
+	"github.com/0xJord4n/lighter-go/types"
+	"github.com/0xJord4n/lighter-go/types/api"
+	"github.com/0xJord4n/lighter-go/types/txtypes"
 )
 
 // SignerClient extends TxClient with convenience methods for common trading patterns.

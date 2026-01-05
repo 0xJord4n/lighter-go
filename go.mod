@@ -1,4 +1,4 @@
-module github.com/0xjord4n/lighter-go
+module github.com/0xJord4n/lighter-go
 
 go 1.23.0
 
