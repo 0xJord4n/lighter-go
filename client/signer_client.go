@@ -6,9 +6,13 @@
 //
 // Example:
 //
-//	// Create a client
+//	// Create a client (recommended - network handles chain ID automatically)
+//	httpClient := http.NewFullClientForNetwork(client.Mainnet)
+//	client, err := client.NewSignerClientForNetwork(httpClient, client.Mainnet, privateKey, 0, accountIndex, nil)
+//
+//	// Or create with explicit URL and chain ID
 //	httpClient := http.NewFullClient("https://mainnet.zklighter.elliot.ai")
-//	client, err := client.NewSignerClient(httpClient, privateKey, chainId, 0, accountIndex, nil)
+//	client, err := client.NewSignerClient(httpClient, privateKey, 304, 0, accountIndex, nil)
 //
 //	// Create a market buy order
 //	txInfo, err := client.CreateMarketOrder(0, 100000, true, nil) // Buy 0.01 ETH
@@ -60,6 +64,17 @@ func NewSignerClient(httpClient FullHTTPClient, privateKey string, chainId uint3
 		fullHTTP:     httpClient,
 		nonceManager: nonceManager,
 	}, nil
+}
+
+// NewSignerClientForNetwork creates a SignerClient using the chain ID from the specified network.
+// The httpClient should be created using http.NewFullClientForNetwork(network) or http.NewFullClient(network.APIURL()).
+//
+// Example:
+//
+//	httpClient := http.NewFullClientForNetwork(client.Mainnet)
+//	client, err := client.NewSignerClientForNetwork(httpClient, client.Mainnet, privateKey, 0, accountIndex, nil)
+func NewSignerClientForNetwork(httpClient FullHTTPClient, network Network, privateKey string, apiKeyIndex uint8, accountIndex int64, nonceManager nonce.Manager) (*SignerClient, error) {
+	return NewSignerClient(httpClient, privateKey, network.ChainID(), apiKeyIndex, accountIndex, nonceManager)
 }
 
 // createTxClient is a helper that creates a TxClient without registering it globally
@@ -294,7 +309,17 @@ func (c *SignerClient) SendAndSubmit(txInfo txtypes.TxInfo) (*api.RespSendTx, er
 		return nil, fmt.Errorf("failed to serialize tx info: %w", err)
 	}
 
-	resp, err := c.fullHTTP.Transaction().SendTx(txInfo.GetTxType(), txInfoJSON, nil)
+	// Use SendTxWithIndices to pass account_index and api_key_index (matching TS SDK)
+	accountIndex := c.GetAccountIndex()
+	apiKeyIndex := c.GetApiKeyIndex()
+	resp, err := c.fullHTTP.Transaction().SendTxWithIndices(
+		txInfo.GetTxType(),
+		txInfoJSON,
+		nil,
+		&accountIndex,
+		&apiKeyIndex,
+		"",
+	)
 	if err != nil {
 		// Acknowledge failure for nonce recovery
 		if optManager, ok := c.nonceManager.(*nonce.OptimisticManager); ok {
@@ -374,12 +399,12 @@ func (c *SignerClient) ChangePubKey(ethPrivateKey string, req *types.ChangePubKe
 	}
 	txInfo.SetL1Sig(l1Sig)
 
-	// Debug: print the JSON payload
-	txInfoJSON, _ := txInfo.GetTxInfo()
-	fmt.Printf("[DEBUG] ChangePubKey txType=%d txInfo=%s\n", txInfo.GetTxType(), txInfoJSON)
-
 	// Submit
-	return c.SendAndSubmit(txInfo)
+	txInfoJSON, err := txInfo.GetTxInfo()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize tx info: %w", err)
+	}
+	return c.fullHTTP.Transaction().SendTx(txInfo.GetTxType(), txInfoJSON, nil)
 }
 
 // GetOpenOrders retrieves open orders for the account
