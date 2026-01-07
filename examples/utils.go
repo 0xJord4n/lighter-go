@@ -3,21 +3,30 @@ package examples
 
 import (
 	"os"
+
+	"github.com/0xJord4n/lighter-go/client"
+	lighterhttp "github.com/0xJord4n/lighter-go/client/http"
+	"github.com/0xJord4n/lighter-go/types"
 )
 
 // Environment variable names
 const (
 	EnvPrivateKey    = "LIGHTER_PRIVATE_KEY"
 	EnvEthPrivateKey = "LIGHTER_ETH_PRIVATE_KEY"
-	EnvAPIURL        = "LIGHTER_API_URL"
-	EnvWSURL         = "LIGHTER_WS_URL"
+	EnvNetwork       = "LIGHTER_NETWORK" // "mainnet" or "testnet"
 )
 
-// DefaultAPIURL is the default mainnet API URL
-const DefaultAPIURL = "https://mainnet.zklighter.elliot.ai"
-
-// DefaultWSURL is the default mainnet WebSocket URL
-const DefaultWSURL = "wss://mainnet.zklighter.elliot.ai/stream"
+// GetNetwork returns the network based on environment variable.
+// Defaults to Mainnet if not set or invalid.
+func GetNetwork() types.Network {
+	network := os.Getenv(EnvNetwork)
+	switch network {
+	case "testnet":
+		return types.Testnet
+	default:
+		return types.Mainnet
+	}
+}
 
 // GetPrivateKey returns the private key from environment
 func GetPrivateKey() string {
@@ -30,18 +39,14 @@ func GetEthPrivateKey() string {
 	return os.Getenv(EnvEthPrivateKey)
 }
 
-// GetAPIURL returns the API URL from environment or default
-func GetAPIURL() string {
-	if url := os.Getenv(EnvAPIURL); url != "" {
-		return url
-	}
-	return DefaultAPIURL
+// CreateHTTPClient creates an HTTP client for the configured network
+func CreateHTTPClient() client.FullHTTPClient {
+	return lighterhttp.NewFullClientForNetwork(GetNetwork())
 }
 
-// GetWSURL returns the WebSocket URL from environment or default
-func GetWSURL() string {
-	if url := os.Getenv(EnvWSURL); url != "" {
-		return url
-	}
-	return DefaultWSURL
+// CreateSignerClient creates a SignerClient for the configured network
+func CreateSignerClient(privateKey string, apiKeyIndex uint8, accountIndex int64) (*client.SignerClient, error) {
+	httpClient := CreateHTTPClient()
+	network := GetNetwork()
+	return client.NewSignerClient(httpClient, privateKey, network.ChainID(), apiKeyIndex, accountIndex, nil)
 }
