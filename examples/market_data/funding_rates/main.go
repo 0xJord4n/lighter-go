@@ -6,14 +6,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 )
 
 func main() {
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
+	network := examples.GetNetwork()
+	httpClient := examples.CreateHTTPClient()
 
+	fmt.Printf("Connected to %s\n", network.String())
 	fmt.Println("Fetching current funding rates for all markets...")
 
 	fundingRates, err := httpClient.Candlestick().GetFundingRates()

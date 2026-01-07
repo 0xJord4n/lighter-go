@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types"
 )
@@ -17,24 +15,24 @@ func main() {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-
-	chainId := uint32(1)
+	// Create signer client (uses LIGHTER_NETWORK env var, defaults to mainnet)
 	apiKeyIndex := uint8(0)
 	accountIndex := int64(1)
 
-	signerClient, err := client.NewSignerClient(httpClient, privateKey, chainId, apiKeyIndex, accountIndex, nil)
+	signerClient, err := examples.CreateSignerClient(privateKey, apiKeyIndex, accountIndex)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
 	}
 
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s (chain ID: %d)\n", network.String(), network.ChainID())
+
 	// Create a public pool
 	// Public pools allow others to deposit and share in trading profits
 	req := &types.CreatePublicPoolTxReq{
-		OperatorFee:          1000,        // 10% operator fee (scaled by 10000)
-		InitialTotalShares:   1000000,     // Initial shares to mint
-		MinOperatorShareRate: 100,         // Minimum operator share rate
+		OperatorFee:          1000,    // 10% operator fee (scaled by 10000)
+		InitialTotalShares:   1000000, // Initial shares to mint
+		MinOperatorShareRate: 100,     // Minimum operator share rate
 	}
 
 	txInfo, err := signerClient.GetCreatePublicPoolTransaction(req, nil)

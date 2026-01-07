@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 )
 
 func main() {
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
+	network := examples.GetNetwork()
+	httpClient := examples.CreateHTTPClient()
+
+	fmt.Printf("Connected to %s\n", network.String())
 
 	// Get L1 address from command line or use a default
 	l1Address := "0x742d35Cc6634C0532925a3b844Bc9e7595f5bE91" // Replace with your L1 address

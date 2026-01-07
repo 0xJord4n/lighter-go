@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types/api"
 )
 
 func main() {
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
+	httpClient := examples.CreateHTTPClient()
+
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s\n\n", network.String())
 
 	// Get order book for market 0 (ETH-USD)
 	marketIndex := int16(0)

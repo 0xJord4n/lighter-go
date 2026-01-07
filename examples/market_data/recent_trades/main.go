@@ -6,13 +6,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 )
 
 func main() {
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
+	network := examples.GetNetwork()
+	httpClient := examples.CreateHTTPClient()
+
+	fmt.Printf("Connected to %s\n", network.String())
 
 	// Get recent trades for market 0 (ETH-USD)
 	marketIndex := int16(0)

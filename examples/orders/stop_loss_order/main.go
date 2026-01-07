@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types"
 )
@@ -18,20 +16,21 @@ func main() {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-
-	signerClient, err := client.NewSignerClient(httpClient, privateKey, 1, 0, 0, nil)
+	// Create signer client (uses LIGHTER_NETWORK env var, defaults to mainnet)
+	signerClient, err := examples.CreateSignerClient(privateKey, 0, 0)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
 	}
 
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s (chain ID: %d)\n\n", network.String(), network.ChainID())
+
 	// Create a stop-loss order
 	// This is typically used to limit losses on an existing position
-	marketIndex := int16(0)          // ETH-USD perp
-	size := int64(1000000)           // 0.01 ETH (scaled)
+	marketIndex := int16(0)             // ETH-USD perp
+	size := int64(1000000)              // 0.01 ETH (scaled)
 	triggerPrice := uint32(2900_000000) // Trigger when price drops to $2900 (6 decimals)
-	isBuy := false                   // Sell when triggered (closing a long position)
+	isBuy := false                      // Sell when triggered (closing a long position)
 	expiry := time.Now().Add(7 * 24 * time.Hour).UnixMilli()
 
 	nonce := int64(-1)

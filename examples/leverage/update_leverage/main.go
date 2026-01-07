@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types"
 )
@@ -17,25 +15,25 @@ func main() {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-
-	chainId := uint32(1)
+	// Create signer client (uses LIGHTER_NETWORK env var, defaults to mainnet)
 	apiKeyIndex := uint8(0)
 	accountIndex := int64(1)
 
-	signerClient, err := client.NewSignerClient(httpClient, privateKey, chainId, apiKeyIndex, accountIndex, nil)
+	signerClient, err := examples.CreateSignerClient(privateKey, apiKeyIndex, accountIndex)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
 	}
+
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s (chain ID: %d)\n", network.String(), network.ChainID())
 
 	// Update leverage settings for a market
 	// InitialMarginFraction is scaled (e.g., 1000 = 10% = 10x leverage)
 	// MarginMode: 0 = Cross, 1 = Isolated
 	req := &types.UpdateLeverageTxReq{
-		MarketIndex:           0,    // ETH-USD perp
-		InitialMarginFraction: 500,  // 5% initial margin = 20x leverage
-		MarginMode:            0,    // Cross margin
+		MarketIndex:           0,   // ETH-USD perp
+		InitialMarginFraction: 500, // 5% initial margin = 20x leverage
+		MarginMode:            0,   // Cross margin
 	}
 
 	txInfo, err := signerClient.GetUpdateLeverageTransaction(req, nil)

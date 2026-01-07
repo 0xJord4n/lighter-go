@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/signer"
 	"github.com/0xJord4n/lighter-go/types"
@@ -28,8 +27,8 @@ import (
 
 // APIKeyConfig stores the generated API keys
 type APIKeyConfig struct {
-	AccountIndex int64             `json:"account_index"`
-	L1Address    string            `json:"l1_address"`
+	AccountIndex int64              `json:"account_index"`
+	L1Address    string             `json:"l1_address"`
 	APIKeys      map[int]APIKeyPair `json:"api_keys"`
 }
 
@@ -45,9 +44,10 @@ func main() {
 		log.Fatal("LIGHTER_ETH_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-	chainId := uint32(1)
+	network := examples.GetNetwork()
+	httpClient := examples.CreateHTTPClient()
+
+	fmt.Printf("Connected to %s (chain ID: %d)\n", network.String(), network.ChainID())
 
 	// Create L1 signer to get our address
 	l1Signer, err := signer.NewL1Signer(ethPrivateKey)
@@ -105,7 +105,7 @@ func main() {
 	signerClient, err := client.NewSignerClient(
 		httpClient,
 		firstKey.PrivateKey,
-		chainId,
+		network.ChainID(),
 		0, // API key index 0
 		accountIndex,
 		nil,
@@ -131,7 +131,7 @@ func main() {
 		keyClient, err := client.NewSignerClient(
 			httpClient,
 			firstKey.PrivateKey, // Use first key to sign
-			chainId,
+			network.ChainID(),
 			uint8(i), // Target API key index
 			accountIndex,
 			nil,

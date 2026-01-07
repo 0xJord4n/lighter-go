@@ -14,7 +14,8 @@ import (
 )
 
 func main() {
-	wsURL := examples.GetWSURL()
+	network := examples.GetNetwork()
+	fmt.Printf("Connecting to %s WebSocket...\n", network.String())
 
 	// Create WebSocket client with default options
 	opts := ws.DefaultOptions().
@@ -25,7 +26,7 @@ func main() {
 			fmt.Printf("Disconnected: %v\n", err)
 		})
 
-	client := ws.NewClient(wsURL, opts)
+	client := ws.NewClient(network.WSURL(), opts)
 
 	// Create context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())

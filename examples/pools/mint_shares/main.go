@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types"
 )
@@ -17,22 +15,22 @@ func main() {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-
-	chainId := uint32(1)
+	// Create signer client (uses LIGHTER_NETWORK env var, defaults to mainnet)
 	apiKeyIndex := uint8(0)
 	accountIndex := int64(1)
 
-	signerClient, err := client.NewSignerClient(httpClient, privateKey, chainId, apiKeyIndex, accountIndex, nil)
+	signerClient, err := examples.CreateSignerClient(privateKey, apiKeyIndex, accountIndex)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
 	}
 
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s (chain ID: %d)\n", network.String(), network.ChainID())
+
 	// Mint shares in a public pool (deposit)
 	req := &types.MintSharesTxReq{
-		PublicPoolIndex: 1,          // Pool to mint shares in
-		ShareAmount:     100000,     // Number of shares to mint
+		PublicPoolIndex: 1,      // Pool to mint shares in
+		ShareAmount:     100000, // Number of shares to mint
 	}
 
 	txInfo, err := signerClient.GetMintSharesTransaction(req, nil)

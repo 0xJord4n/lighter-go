@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	wsURL := examples.GetWSURL()
+	network := examples.GetNetwork()
+	wsURL := network.WSURL()
+
+	fmt.Printf("Connecting to %s WebSocket at %s\n", network.String(), wsURL)
 
 	// Create WebSocket client with default options
 	opts := ws.DefaultOptions().

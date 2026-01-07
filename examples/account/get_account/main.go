@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types/api"
 )
 
 func main() {
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
+	network := examples.GetNetwork()
+	httpClient := examples.CreateHTTPClient()
+
+	fmt.Printf("Connected to %s\n", network.String())
 
 	// Get account by index
 	accountIndex := "0" // Replace with your account index

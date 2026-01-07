@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/0xJord4n/lighter-go/client"
-	"github.com/0xJord4n/lighter-go/client/http"
 	"github.com/0xJord4n/lighter-go/examples"
 	"github.com/0xJord4n/lighter-go/types"
 )
@@ -18,13 +16,14 @@ func main() {
 		log.Fatal("LIGHTER_PRIVATE_KEY environment variable not set")
 	}
 
-	apiURL := examples.GetAPIURL()
-	httpClient := http.NewFullClient(apiURL)
-
-	signerClient, err := client.NewSignerClient(httpClient, privateKey, 1, 0, 0, nil)
+	// Create signer client (uses LIGHTER_NETWORK env var, defaults to mainnet)
+	signerClient, err := examples.CreateSignerClient(privateKey, 0, 0)
 	if err != nil {
 		log.Fatalf("Failed to create signer client: %v", err)
 	}
+
+	network := examples.GetNetwork()
+	fmt.Printf("Connected to %s (chain ID: %d)\n", network.String(), network.ChainID())
 
 	// Create a limit buy order
 	marketIndex := int16(0)            // ETH-USD perp
