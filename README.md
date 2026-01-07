@@ -23,17 +23,18 @@ package main
 
 import (
     "fmt"
+    "github.com/0xJord4n/lighter-go/client"
     "github.com/0xJord4n/lighter-go/client/http"
     "github.com/0xJord4n/lighter-go/types/api"
 )
 
 func main() {
-    // Create HTTP client
-    client := http.NewFullClient("https://mainnet.zklighter.elliot.ai")
+    // Create HTTP client for mainnet (or use client.Testnet for testnet)
+    httpClient := http.NewFullClientForNetwork(client.Mainnet)
 
     // Get order book
     marketIndex := int16(0) // ETH-USD
-    orderBooks, _ := client.Order().GetOrderBooks(&marketIndex, api.MarketFilterAll)
+    orderBooks, _ := httpClient.Order().GetOrderBooks(&marketIndex, api.MarketFilterAll)
 
     for _, ob := range orderBooks.OrderBooks {
         fmt.Printf("Best Bid: %s @ %s\n", ob.Bids[0].Size, ob.Bids[0].Price)
@@ -48,22 +49,25 @@ func main() {
 package main
 
 import (
+    "fmt"
     "github.com/0xJord4n/lighter-go/client"
     "github.com/0xJord4n/lighter-go/client/http"
     "github.com/0xJord4n/lighter-go/types"
 )
 
 func main() {
-    httpClient := http.NewFullClient("https://mainnet.zklighter.elliot.ai")
+    // Use network enum for correct chain ID (304 for mainnet, 300 for testnet)
+    network := client.Mainnet
+    httpClient := http.NewFullClientForNetwork(network)
 
     // Create signer client with your private key
     signerClient, _ := client.NewSignerClient(
         httpClient,
         "your-private-key",
-        1,    // chainId
-        0,    // apiKeyIndex
-        0,    // accountIndex
-        nil,  // nonceManager (nil = use optimistic)
+        network.ChainID(), // automatically uses correct chain ID
+        0,                 // apiKeyIndex
+        0,                 // accountIndex
+        nil,               // nonceManager (nil = use optimistic)
     )
 
     // Create a market order
@@ -88,21 +92,24 @@ package main
 import (
     "context"
     "fmt"
+    "github.com/0xJord4n/lighter-go/client"
     "github.com/0xJord4n/lighter-go/client/ws"
 )
 
 func main() {
-    client := ws.NewClient("wss://mainnet.zklighter.elliot.ai/ws", ws.DefaultOptions())
+    // Use network for correct WebSocket URL
+    network := client.Mainnet
+    wsClient := ws.NewClient(network.WSURL(), ws.DefaultOptions())
 
     ctx := context.Background()
-    client.Connect(ctx)
-    defer client.Close()
+    wsClient.Connect(ctx)
+    defer wsClient.Close()
 
     // Subscribe to order book
-    client.SubscribeOrderBook(0) // ETH-USD
+    wsClient.SubscribeOrderBook(0) // ETH-USD
 
     // Process updates
-    for update := range client.OrderBookUpdates() {
+    for update := range wsClient.OrderBookUpdates() {
         if update.State != nil {
             bestBid := update.State.GetBestBid()
             bestAsk := update.State.GetBestAsk()
@@ -171,7 +178,8 @@ manager := nonce.NewOptimisticManager(httpClient)
 manager := nonce.NewAPIManager(httpClient)
 
 // Create signer with custom nonce manager
-signerClient, _ := client.NewSignerClient(httpClient, privateKey, chainId, 0, 0, manager)
+network := client.Mainnet
+signerClient, _ := client.NewSignerClient(httpClient, privateKey, network.ChainID(), 0, 0, manager)
 ```
 
 ## Transactions
