@@ -65,7 +65,7 @@ func GetClient(apiKeyIndex uint8, accountIndex int64) (*TxClient, error) {
 // CreateClient creates a new TxClient and stores it
 // httpClientFactory is a function that creates an HTTP client from a URL string
 func CreateClient(httpClient MinimalHTTPClient, privateKey string, chainId uint32, apiKeyIndex uint8, accountIndex int64) (*TxClient, error) {
-	if accountIndex <= 0 {
+	if accountIndex < 0 {
 		return nil, fmt.Errorf("invalid account index")
 	}
 
