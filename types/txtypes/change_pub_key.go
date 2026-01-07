@@ -1,8 +1,10 @@
 package txtypes
 
 import (
+	"encoding/hex"
 	"fmt"
 
+	"github.com/bytedance/sonic"
 	g "github.com/elliottech/poseidon_crypto/field/goldilocks"
 	p2 "github.com/elliottech/poseidon_crypto/hash/poseidon2_goldilocks"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +23,30 @@ type L2ChangePubKeyTxInfo struct {
 	Nonce      int64
 	Sig        []byte
 	SignedHash string `json:"-"`
+}
+
+// l2ChangePubKeyTxInfoJSON is the JSON representation with hex-encoded byte fields
+type l2ChangePubKeyTxInfoJSON struct {
+	AccountIndex int64  `json:"AccountIndex"`
+	ApiKeyIndex  uint8  `json:"ApiKeyIndex"`
+	PubKey       string `json:"PubKey"`
+	L1Sig        string `json:"L1Sig"`
+	ExpiredAt    int64  `json:"ExpiredAt"`
+	Nonce        int64  `json:"Nonce"`
+	Sig          string `json:"Sig"`
+}
+
+// MarshalJSON implements custom JSON marshaling to encode PubKey and Sig as hex strings
+func (txInfo *L2ChangePubKeyTxInfo) MarshalJSON() ([]byte, error) {
+	return sonic.Marshal(&l2ChangePubKeyTxInfoJSON{
+		AccountIndex: txInfo.AccountIndex,
+		ApiKeyIndex:  txInfo.ApiKeyIndex,
+		PubKey:       hex.EncodeToString(txInfo.PubKey),
+		L1Sig:        txInfo.L1Sig,
+		ExpiredAt:    txInfo.ExpiredAt,
+		Nonce:        txInfo.Nonce,
+		Sig:          hex.EncodeToString(txInfo.Sig),
+	})
 }
 
 func (txInfo *L2ChangePubKeyTxInfo) GetTxType() uint8 {
