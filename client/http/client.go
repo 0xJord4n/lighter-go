@@ -34,6 +34,7 @@ import (
 	"time"
 
 	core "github.com/0xJord4n/lighter-go/client"
+	"github.com/0xJord4n/lighter-go/types"
 )
 
 var (
@@ -101,6 +102,16 @@ func NewFullClient(baseUrl string) core.FullHTTPClient {
 	return &client{
 		endpoint: baseUrl,
 	}
+}
+
+// NewFullClientForNetwork creates a new HTTP client for the specified network.
+// This is the simplest way to create a properly configured client.
+//
+// Example:
+//
+//	client := http.NewFullClientForNetwork(types.Mainnet)
+func NewFullClientForNetwork(network types.Network) core.FullHTTPClient {
+	return NewFullClient(network.APIURL())
 }
 
 // Account returns the AccountAPI for account-related operations
