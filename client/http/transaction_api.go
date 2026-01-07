@@ -16,15 +16,30 @@ type transactionAPIImpl struct {
 var _ core.TransactionAPI = (*transactionAPIImpl)(nil)
 
 func (t *transactionAPIImpl) SendTx(txType uint8, txInfo string, priceProtection *api.PriceProtection) (*api.RespSendTx, error) {
+	return t.SendTxWithIndices(txType, txInfo, priceProtection, nil, nil, "")
+}
+
+// SendTxWithIndices sends a transaction with optional account_index, api_key_index, and auth parameters
+func (t *transactionAPIImpl) SendTxWithIndices(txType uint8, txInfo string, priceProtection *api.PriceProtection, accountIndex *int64, apiKeyIndex *uint8, auth string) (*api.RespSendTx, error) {
 	result := &api.RespSendTx{}
-	body := map[string]any{
+	// Use JSON body (matching Python SDK behavior)
+	params := map[string]any{
 		"tx_type": txType,
 		"tx_info": txInfo,
 	}
 	if priceProtection != nil {
-		body["price_protection"] = priceProtection
+		params["price_protection"] = true
 	}
-	err := t.client.postAndParseL2HTTPResponse("api/v1/sendTx", body, result)
+	if accountIndex != nil {
+		params["account_index"] = *accountIndex
+	}
+	if apiKeyIndex != nil {
+		params["api_key_index"] = *apiKeyIndex
+	}
+	if auth != "" {
+		params["auth"] = auth
+	}
+	err := t.client.postFormL2HTTPResponse("api/v1/sendTx", params, result)
 	if err != nil {
 		return nil, err
 	}

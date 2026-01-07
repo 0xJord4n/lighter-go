@@ -127,6 +127,9 @@ type TransactionAPI interface {
 	// SendTx submits a signed transaction
 	SendTx(txType uint8, txInfo string, priceProtection *api.PriceProtection) (*api.RespSendTx, error)
 
+	// SendTxWithIndices submits a transaction with explicit account and API key indices
+	SendTxWithIndices(txType uint8, txInfo string, priceProtection *api.PriceProtection, accountIndex *int64, apiKeyIndex *uint8, auth string) (*api.RespSendTx, error)
+
 	// SendTxBatch submits multiple transactions
 	SendTxBatch(txTypes []uint8, txInfos []string) (*api.RespSendTxBatch, error)
 
