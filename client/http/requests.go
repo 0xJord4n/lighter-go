@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -120,7 +121,7 @@ func (c *client) postAndParseL2HTTPResponse(path string, body interface{}, resul
 	return nil
 }
 
-// postFormL2HTTPResponse sends a POST request with form-encoded body and parses the response
+// postFormL2HTTPResponse sends a POST request with multipart/form-data body and parses the response
 func (c *client) postFormL2HTTPResponse(path string, params map[string]any, result interface{}) error {
 	u, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -128,17 +129,23 @@ func (c *client) postFormL2HTTPResponse(path string, params map[string]any, resu
 	}
 	u.Path = path
 
-	// Build form data
-	form := url.Values{}
+	// Build multipart form data (matching Python SDK's multipart/form-data)
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
 	for k, v := range params {
-		form.Set(k, fmt.Sprintf("%v", v))
+		if err := writer.WriteField(k, fmt.Sprintf("%v", v)); err != nil {
+			return fmt.Errorf("failed to write form field %s: %w", k, err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewReader([]byte(form.Encode())))
+	req, err := http.NewRequest(http.MethodPost, u.String(), &body)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
