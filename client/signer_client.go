@@ -374,6 +374,10 @@ func (c *SignerClient) ChangePubKey(ethPrivateKey string, req *types.ChangePubKe
 	}
 	txInfo.SetL1Sig(l1Sig)
 
+	// Debug: print the JSON payload
+	txInfoJSON, _ := txInfo.GetTxInfo()
+	fmt.Printf("[DEBUG] ChangePubKey txType=%d txInfo=%s\n", txInfo.GetTxType(), txInfoJSON)
+
 	// Submit
 	return c.SendAndSubmit(txInfo)
 }
